@@ -1,0 +1,38 @@
+{
+  "format": "dalam-transfer-v2",
+  "exportedAt": "2026-03-18T09:39:19.671Z",
+  "app": {
+    "name": "Dalam",
+    "version": "1.0.0"
+  },
+  "settings": {},
+  "imageSettingsRaw": null,
+  "brainProfileRaw": null,
+  "agentMemory": {},
+  "scope": "single",
+  "conversations": [
+    {
+      "id": "imported-manual-chat",
+      "shortId": "manual01",
+      "title": "Imported Manual Chat",
+      "createdAt": "2026-03-18T09:39:19.671Z",
+      "messages": [
+        {
+          "id": "imp-m1",
+          "role": "user",
+          "content": "Imported hello",
+          "timestamp": "2026-03-18T09:39:19.671Z",
+          "versions": [
+            {
+              "id": "imp-m1-v1",
+              "content": "Imported hello",
+              "timestamp": "2026-03-18T09:39:19.671Z"
+            }
+          ],
+          "activeVersionIndex": 0
+        }
+      ]
+    }
+  ],
+  "ocrDocuments": []
+}

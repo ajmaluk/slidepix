@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /manage/
+Disallow: /work/
+Disallow: /auth
+Disallow: /payment
+Disallow: /admin-setup
+Disallow: /preview/
+Disallow: /reset-password
+
+User-agent: Googlebot
+Allow: /
+Disallow: /admin/
+Disallow: /manage/
+Disallow: /work/
+Disallow: /auth
+Disallow: /payment
+Disallow: /admin-setup
+Disallow: /preview/
+Disallow: /reset-password
+
+Sitemap: https://dalam.pixtool.in/sitemap.xml

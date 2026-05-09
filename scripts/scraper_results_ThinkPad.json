@@ -1,0 +1,27 @@
+{
+  "keyword": "ThinkPad",
+  "timestamp": "2026-04-27T03:32:02.249Z",
+  "totalResults": 2,
+  "data": [
+    {
+      "id": "tb-002",
+      "platform": "Taobao",
+      "title": "Lenovo ThinkPad X1 Carbon 2023",
+      "price": 12500,
+      "sales": 4500,
+      "rating": 4.8,
+      "url": "https://detail.tmall.com/item.htm?id=10002",
+      "valueScore": 88
+    },
+    {
+      "id": "jd-002",
+      "platform": "JD.com",
+      "title": "Lenovo ThinkPad X1 Carbon Gen 11",
+      "price": 12999,
+      "sales": 3000,
+      "rating": 4.7,
+      "url": "https://item.jd.com/10002.html",
+      "valueScore": 85
+    }
+  ]
+}

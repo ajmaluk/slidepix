@@ -1,0 +1,189 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function callerSub() {
+      return get(/databases/$(database)/documents/user_subscriptions/$(request.auth.uid));
+    }
+
+    function hasCallerSub() {
+      return isSignedIn() && callerSub().data != null;
+    }
+
+    function isAdmin() {
+      return hasCallerSub() && callerSub().data.role == 'admin';
+    }
+
+    function isManager() {
+      return hasCallerSub() && callerSub().data.role == 'manager';
+    }
+
+    function isWorker() {
+      return hasCallerSub() && callerSub().data.role == 'worker';
+    }
+
+    function isStaff() {
+      return isAdmin() || isManager() || isWorker();
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isUnchanged(field) {
+      return request.resource.data[field] == resource.data[field];
+    }
+
+    match /user_subscriptions/{userId} {
+      allow create: if (
+        isOwner(userId)
+        && request.resource.data.user_id == userId
+        && request.resource.data.role == 'user'
+        && request.resource.data.tier == 'free'
+      ) || isAdmin();
+
+      allow read: if isSignedIn() && (isOwner(userId) || isStaff());
+
+      allow update: if isSignedIn() && (
+        isAdmin() || 
+        (isOwner(userId) && (
+          // Case 1: Automated tracking updates (Visits, API counters)
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'updated_at', 'last_login', 'visits_today', 'last_visit_date', 
+            'api_requests_today', 'api_requests_reset_at', 
+            'pro_requests_today', 'pro_requests_reset_at'
+          ]) || 
+          // Case 2: User-editable profile fields
+          (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'updated_at', 'full_name', 'email', 'date_of_birth', 'country', 'auth_provider'
+            ]) &&
+            isUnchanged('user_id') &&
+            isUnchanged('role') &&
+            isUnchanged('tier') &&
+            isUnchanged('is_banned') &&
+            isUnchanged('is_active') &&
+            isUnchanged('subscription_active') &&
+            isUnchanged('subscription_started_at') &&
+            isUnchanged('subscription_expires_at') &&
+            isUnchanged('cancel_at_period_end') &&
+            isUnchanged('plan_duration_days') &&
+            isUnchanged('auto_renew') &&
+            isUnchanged('account_created_at') &&
+            isUnchanged('created_at')
+          )
+        ))
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow create: if isOwner(userId) || isAdmin();
+      allow read: if isSignedIn() && (isOwner(userId) || isStaff());
+      allow update: if isSignedIn() && (
+        isAdmin() || 
+        (isOwner(userId) && 
+          isUnchanged('role') && 
+          isUnchanged('user_id') &&
+          isUnchanged('tier') &&
+          isUnchanged('is_banned') &&
+          isUnchanged('is_active') &&
+          isUnchanged('subscription_active') &&
+          isUnchanged('account_created_at') &&
+          isUnchanged('created_at')
+        )
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /api_keys/{docId} {
+      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
+      allow read, delete: if isSignedIn() && (resource.data.user_id == request.auth.uid || isAdmin());
+      allow update: if isSignedIn() && (resource.data.user_id == request.auth.uid || isAdmin()) && 
+                    isUnchanged('key') && isUnchanged('user_id');
+    }
+
+    match /api_usage_logs/{docId} {
+      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
+      allow read: if isSignedIn() && (resource.data.user_id == request.auth.uid || isAdmin());
+      allow update, delete: if false;
+    }
+
+    match /tasks/{docId} {
+      allow read: if isSignedIn() && (isStaff() || resource.data.creator_id == request.auth.uid || resource.data.assignee_id == request.auth.uid);
+      allow create: if isSignedIn() && (isStaff() || request.resource.data.creator_id == request.auth.uid);
+      allow update: if isSignedIn() && (isStaff() || resource.data.creator_id == request.auth.uid) && isUnchanged('creator_id');
+      allow delete: if isSignedIn() && (isStaff() || resource.data.creator_id == request.auth.uid);
+    }
+
+    match /teams/{docId} {
+      allow read: if isSignedIn() && isStaff();
+      allow create, update, delete: if isSignedIn() && isStaff();
+    }
+
+    match /team_members/{docId} {
+      allow read: if isSignedIn() && isStaff();
+      allow create, update, delete: if isSignedIn() && isStaff();
+    }
+
+    match /job_positions/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isSignedIn() && isStaff();
+    }
+
+    match /job_applications/{docId} {
+      allow create: if isSignedIn();
+      allow read: if isSignedIn() && isStaff();
+      allow update, delete: if isSignedIn() && isStaff();
+    }
+
+    match /content_posts/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isSignedIn() && isStaff();
+    }
+
+    match /user_ratings/{docId} {
+      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
+      allow read: if (resource.data.approved == true || (isSignedIn() && (resource.data.user_id == request.auth.uid || isStaff())));
+      allow update: if isSignedIn() && (isStaff() || (resource.data.user_id == request.auth.uid && isUnchanged('user_id')));
+      allow delete: if isSignedIn() && (isStaff() || resource.data.user_id == request.auth.uid);
+    }
+
+    match /user_feedback/{docId} {
+      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
+      allow read: if isStaff() || (isSignedIn() && resource.data.user_id == request.auth.uid);
+      allow update, delete: if isSignedIn() && isStaff();
+    }
+
+    match /transactions/{docId} {
+      allow read, update, delete: if isSignedIn() && isStaff();
+      allow create: if false;
+    }
+
+    match /system_services/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isSignedIn() && isStaff();
+    }
+
+    match /system_incidents/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isSignedIn() && isStaff();
+    }
+
+    match /issue_reports/{docId} {
+      allow read, create, update, delete: if isSignedIn() && isStaff();
+    }
+
+    match /server_status_logs/{docId} {
+      allow read, create, update, delete: if isSignedIn() && isStaff();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" width="280" height="280" role="img" aria-label="Ravi — The Creative orb">
+  <!-- Ravi — The Creative -->
+  <defs>
+    <filter id="marble-ravi" x="-50%" y="-50%" width="200%" height="200%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.0130" numOctaves="2" seed="16" result="noise">
+        <animate attributeName="baseFrequency" values="0.0094;0.0166;0.0130;0.0094" dur="1.56s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="35" xChannelSelector="R" yChannelSelector="G">
+        <animate attributeName="scale" values="22;43;35;22" dur="1.32s" repeatCount="indefinite"/>
+      </feDisplacementMap>
+      <feGaussianBlur stdDeviation="0.8"/>
+    </filter>
+    <filter id="glow-ravi">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <clipPath id="clip-ravi">
+      <circle cx="140" cy="140" r="135"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#clip-ravi)">
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="0 140 140;4 140 140;-3 140 140;0 140 140" dur="2.25s" repeatCount="indefinite"/>
+      <rect x="0" y="0" width="280" height="280" fill="#4f46e5"/>
+  <circle cx="200" cy="90" r="115" fill="#a855f7" opacity="0.85" filter="url(#marble-ravi)">
+    <animate attributeName="cy" values="90;110;80;90" dur="1.50s" repeatCount="indefinite"/>
+    <animate attributeName="cx" values="200;180;210;200" dur="1.65s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.67;0.95;0.67" dur="1.08s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="70" cy="180" r="105" fill="#ec4899" opacity="0.8" filter="url(#marble-ravi)">
+    <animate attributeName="cy" values="180;160;190;180" dur="1.35s" repeatCount="indefinite"/>
+    <animate attributeName="cx" values="70;90;60;70" dur="1.80s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.62;0.90;0.62" dur="1.08s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="220" cy="200" r="85" fill="#6366f1" opacity="0.7" filter="url(#marble-ravi)">
+    <animate attributeName="cy" values="200;180;210;200" dur="1.95s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.52;0.80;0.52" dur="1.08s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="130" cy="70" r="75" fill="#4f46e5" opacity="0.6" filter="url(#marble-ravi)">
+    <animate attributeName="cx" values="130;110;140;130" dur="1.50s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.45;0.70;0.45" dur="1.08s" repeatCount="indefinite"/>
+  </circle>
+    </g>
+  </g>
+
+  <!-- Specular highlight -->
+  <ellipse cx="90" cy="80" rx="40" ry="30" fill="white" opacity="0.4" filter="url(#glow-ravi)"/>
+  <ellipse cx="100" cy="90" rx="20" ry="15" fill="white" opacity="0.6"/>
+  <!-- Rim -->
+  <circle cx="140" cy="140" r="135" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+</svg>

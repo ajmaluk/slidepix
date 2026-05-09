@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" width="280" height="280" role="img" aria-label="Arjun — The Retriever orb">
+  <!-- Arjun — The Retriever -->
+  <defs>
+    <filter id="marble-arjun" x="-50%" y="-50%" width="200%" height="200%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.0140" numOctaves="2" seed="5" result="noise">
+        <animate attributeName="baseFrequency" values="0.0101;0.0179;0.0140;0.0101" dur="1.56s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="34" xChannelSelector="R" yChannelSelector="G">
+        <animate attributeName="scale" values="21;41;34;21" dur="1.32s" repeatCount="indefinite"/>
+      </feDisplacementMap>
+      <feGaussianBlur stdDeviation="0.8"/>
+    </filter>
+    <filter id="glow-arjun">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <clipPath id="clip-arjun">
+      <circle cx="140" cy="140" r="135"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#clip-arjun)">
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="0 140 140;4 140 140;-3 140 140;0 140 140" dur="2.25s" repeatCount="indefinite"/>
+      <rect x="0" y="0" width="280" height="280" fill="#f97316"/>
+  <circle cx="220" cy="80" r="110" fill="#fbbf24" opacity="0.85" filter="url(#marble-arjun)">
+    <animate attributeName="cy" values="80;100;70;80" dur="1.50s" repeatCount="indefinite"/>
+    <animate attributeName="cx" values="220;200;230;220" dur="1.65s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.67;0.95;0.67" dur="1.08s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="60" cy="180" r="100" fill="#f43f5e" opacity="0.8" filter="url(#marble-arjun)">
+    <animate attributeName="cy" values="180;160;190;180" dur="1.35s" repeatCount="indefinite"/>
+    <animate attributeName="cx" values="60;80;50;60" dur="1.80s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.62;0.90;0.62" dur="1.08s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="180" cy="220" r="90" fill="#ea580c" opacity="0.7" filter="url(#marble-arjun)">
+    <animate attributeName="cy" values="220;200;230;220" dur="1.95s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.52;0.80;0.52" dur="1.08s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="140" cy="100" r="70" fill="#f97316" opacity="0.6" filter="url(#marble-arjun)">
+    <animate attributeName="cx" values="140;120;160;140" dur="1.50s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.45;0.70;0.45" dur="1.08s" repeatCount="indefinite"/>
+  </circle>
+    </g>
+  </g>
+
+  <!-- Specular highlight -->
+  <ellipse cx="90" cy="80" rx="40" ry="30" fill="white" opacity="0.4" filter="url(#glow-arjun)"/>
+  <ellipse cx="100" cy="90" rx="20" ry="15" fill="white" opacity="0.6"/>
+  <!-- Rim -->
+  <circle cx="140" cy="140" r="135" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+</svg>

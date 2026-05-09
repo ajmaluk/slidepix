@@ -1,0 +1,197 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 9%;
+
+    --card: 0 0% 98%;
+    --card-foreground: 0 0% 9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 9%;
+
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 9%;
+
+    --muted: 0 0% 94%;
+    --muted-foreground: 0 0% 45%;
+
+    --accent: 0 0% 94%;
+    --accent-foreground: 0 0% 9%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 0% 9%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 97%;
+    --sidebar-foreground: 0 0% 30%;
+    --sidebar-primary: 0 0% 9%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 0 0% 93%;
+    --sidebar-accent-foreground: 0 0% 9%;
+    --sidebar-border: 0 0% 91%;
+    --sidebar-ring: 0 0% 9%;
+
+    --user-bubble: 0 0% 93%;
+    --ai-bubble: 0 0% 100%;
+    --surface-hover: 0 0% 94%;
+    --thinking-bg: 0 0% 95%;
+  }
+
+  .dark {
+    --background: 220 12% 5%;
+    --foreground: 210 20% 93%;
+
+    --card: 220 12% 8%;
+    --card-foreground: 210 20% 93%;
+
+    --popover: 220 12% 8%;
+    --popover-foreground: 210 20% 93%;
+
+    --primary: 210 20% 93%;
+    --primary-foreground: 220 12% 5%;
+
+    --secondary: 220 10% 12%;
+    --secondary-foreground: 210 15% 80%;
+
+    --muted: 220 10% 14%;
+    --muted-foreground: 215 10% 46%;
+
+    --accent: 220 10% 14%;
+    --accent-foreground: 210 20% 93%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 220 10% 16%;
+    --input: 220 10% 16%;
+    --ring: 210 20% 93%;
+
+    --sidebar-background: 220 12% 6%;
+    --sidebar-foreground: 215 10% 55%;
+    --sidebar-primary: 210 20% 93%;
+    --sidebar-primary-foreground: 220 12% 5%;
+    --sidebar-accent: 220 10% 12%;
+    --sidebar-accent-foreground: 210 20% 93%;
+    --sidebar-border: 220 10% 12%;
+    --sidebar-ring: 210 20% 93%;
+
+    --user-bubble: 220 10% 14%;
+    --ai-bubble: 220 12% 5%;
+    --surface-hover: 220 10% 15%;
+    --thinking-bg: 220 10% 10%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased relative;
+    font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  }
+
+  code, pre {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+@layer utilities {
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+    background: transparent;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 2px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+}
+
+/* Typing effect cursor for streaming messages */
+.streaming-message > .chat-prose > *:last-child::after {
+  content: '▋';
+  display: inline-block;
+  vertical-align: text-bottom;
+  animation: blink 1s step-end infinite;
+  margin-left: 2px;
+  color: hsl(var(--foreground));
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Voice orb animations — GPU-accelerated (transform + opacity only) */
+@keyframes pulse-ring {
+  0%, 100% { transform: scale(1); opacity: 0.25; }
+  50% { transform: scale(1.18); opacity: 0; }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { transform: scale(1); opacity: 0.95; }
+  50% { transform: scale(1.03); opacity: 1; }
+}
+
+@keyframes orb-float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-3px) scale(1.01); }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 3s ease-in-out infinite;
+}
+
+.animate-orb-float {
+  animation: orb-float 4s ease-in-out infinite;
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
