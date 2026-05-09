@@ -4,6 +4,7 @@ import { ClerkProvider } from "@clerk/react";
 import "./hooks/useTheme"; // Initialize theme before render to prevent flash
 import App from "./App.tsx";
 import ErrorBoundary from "@/components/shared/ErrorBoundary";
+import { ClerkSessionBridge } from "@/components/auth/ClerkSessionBridge";
 import { installStaleChunkGuard } from "@/lib/staleChunkGuard";
 import "./index.css";
 
@@ -25,6 +26,7 @@ if (root) {
     clerkPublishableKey ? (
       <ClerkProvider afterSignOutUrl="/">
         {appTree}
+        <ClerkSessionBridge />
       </ClerkProvider>
     ) : (
       appTree

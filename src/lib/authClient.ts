@@ -1,285 +1,169 @@
-import {
-	createUserWithEmailAndPassword,
-	getIdToken,
-	onIdTokenChanged,
-	sendPasswordResetEmail,
-	signInWithEmailAndPassword,
-	signOut,
-	updatePassword,
-	updateProfile,
-	type User,
-} from "firebase/auth";
 import { resolveEdgeFunctionsBaseUrl } from "@/lib/apiConfig";
-import { firebaseAuth } from "@/lib/firebaseClient";
+import {
+  getClerkSessionSnapshot,
+  refreshClerkSession,
+  signOutClerkSession,
+  subscribeClerkSession,
+  type ClerkStoredSession,
+} from "@/lib/clerkSessionStore";
 
-type AppSession = {
-	user: {
-		id: string;
-		email: string | null;
-		user_metadata: Record<string, unknown>;
-	};
-	access_token: string;
-};
+type AppSession = ClerkStoredSession;
 
-const SESSION_CACHE_TTL_MS = 10_000;
-
-let sessionCache: { value: AppSession | null; expiresAt: number } | null = null;
-let sessionInFlight: Promise<AppSession | null> | null = null;
-
-function invalidateSessionCache() {
-	sessionCache = null;
-}
-
-function readSessionCache(): AppSession | null | undefined {
-	if (!sessionCache) return undefined;
-	if (sessionCache.expiresAt <= Date.now()) {
-		sessionCache = null;
-		return undefined;
-	}
-	return sessionCache.value;
-}
-
-function writeSessionCache(value: AppSession | null) {
-	sessionCache = {
-		value,
-		expiresAt: Date.now() + SESSION_CACHE_TTL_MS,
-	};
-}
-
-function toSession(user: User, token: string): AppSession {
-	return {
-		user: {
-			id: user.uid,
-			email: user.email,
-			user_metadata: {
-				full_name: user.displayName || user.email?.split("@")[0] || "User",
-			},
-		},
-		access_token: token,
-	};
-}
-
-async function getSessionInternal(): Promise<AppSession | null> {
-	const user = firebaseAuth.currentUser;
-	if (!user) {
-		writeSessionCache(null);
-		return null;
-	}
-	const token = await getIdToken(user);
-	const session = toSession(user, token);
-	writeSessionCache(session);
-	return session;
-}
-
-async function getSessionCached(forceRefresh = false): Promise<AppSession | null> {
-	if (!forceRefresh) {
-		const cached = readSessionCache();
-		if (cached !== undefined) {
-			return cached;
-		}
-	}
-
-	if (!sessionInFlight) {
-		sessionInFlight = getSessionInternal().finally(() => {
-			sessionInFlight = null;
-		});
-	}
-
-	return sessionInFlight;
+function getCurrentSession(): AppSession | null {
+  return getClerkSessionSnapshot().session;
 }
 
 export const authClient = {
-	auth: {
-		async getSession(options?: { forceRefresh?: boolean }) {
-			const session = await getSessionCached(options?.forceRefresh === true);
-			return { data: { session } };
-		},
+  auth: {
+    async getSession(options?: { forceRefresh?: boolean }) {
+      const session = await refreshClerkSession(options?.forceRefresh === true);
+      return { data: { session } };
+    },
 
-		async getUser(options?: { forceRefresh?: boolean }) {
-			const session = await getSessionCached(options?.forceRefresh === true);
-			return { data: { user: session?.user || null } };
-		},
+    async getUser(options?: { forceRefresh?: boolean }) {
+      const session = await refreshClerkSession(options?.forceRefresh === true);
+      return { data: { user: session?.user || null } };
+    },
 
-		onAuthStateChange(callback: (event: string, session: AppSession | null) => void) {
-			const unsubscribe = onIdTokenChanged(firebaseAuth, async (user) => {
-				invalidateSessionCache();
-				if (!user) {
-					callback("SIGNED_OUT", null);
-					return;
-				}
-				const token = await getIdToken(user);
-				const session = toSession(user, token);
-				writeSessionCache(session);
-				callback("SIGNED_IN", session);
-			});
+    onAuthStateChange(callback: (event: string, session: AppSession | null) => void) {
+      const initial = getCurrentSession();
+      callback(initial ? "SIGNED_IN" : "SIGNED_OUT", initial);
 
-			return { data: { subscription: { unsubscribe } } };
-		},
+      let previousSessionId = initial?.session_id || null;
+      const unsubscribe = subscribeClerkSession((snapshot) => {
+        const currentSessionId = snapshot.session?.session_id || null;
+        const event = !snapshot.session
+          ? "SIGNED_OUT"
+          : previousSessionId && previousSessionId !== currentSessionId
+            ? "TOKEN_REFRESHED"
+            : "SIGNED_IN";
 
-		async signInWithPassword({ email, password }: { email: string; password: string }) {
-			try {
-				const creds = await signInWithEmailAndPassword(firebaseAuth, email, password);
-				const token = await getIdToken(creds.user);
-				const session = toSession(creds.user, token);
-				writeSessionCache(session);
-				return { data: { user: session.user, session }, error: null };
-			} catch (error: any) {
-				invalidateSessionCache();
-				return { data: { user: null, session: null }, error };
-			}
-		},
+        previousSessionId = currentSessionId;
+        callback(event, snapshot.session);
+      });
 
-		async signUp({
-			email,
-			password,
-			options,
-		}: {
-			email: string;
-			password: string;
-			options?: { data?: Record<string, unknown> };
-		}) {
-			try {
-				const creds = await createUserWithEmailAndPassword(firebaseAuth, email, password);
-				const fullName = String(options?.data?.full_name || "").trim();
-				if (fullName) {
-					await updateProfile(creds.user, { displayName: fullName });
-				}
-				const token = await getIdToken(creds.user);
-				const session = toSession(creds.user, token);
-				writeSessionCache(session);
-				return { data: { user: session.user, session }, error: null };
-			} catch (error: any) {
-				invalidateSessionCache();
-				return { data: { user: null, session: null }, error };
-			}
-		},
+      return { data: { subscription: { unsubscribe } } };
+    },
 
-		async signOut() {
-			try {
-				await signOut(firebaseAuth);
-				sessionStorage.removeItem("firebase_pending_signup_v1");
-				sessionStorage.removeItem("firebase_pending_forgot_password_v1");
-				sessionStorage.removeItem("dalam_pending_imagine_prompt");
-				sessionStorage.removeItem("dalam_pending_voice_prompt");
-				sessionStorage.removeItem("dalam_pending_chat_message");
-				invalidateSessionCache();
-				return { error: null };
-			} catch (error: any) {
-				return { error };
-			}
-		},
+    async signInWithPassword() {
+      return {
+        data: { user: null, session: null },
+        error: new Error("Email/password sign-in is handled by Clerk"),
+      };
+    },
 
-		async resetPasswordForEmail(email: string, options?: { redirectTo?: string }) {
-			try {
-				await sendPasswordResetEmail(firebaseAuth, email, options?.redirectTo ? {
-					url: options.redirectTo,
-					handleCodeInApp: true,
-				} : undefined);
-				return { error: null };
-			} catch (error: any) {
-				return { error };
-			}
-		},
+    async signUp() {
+      return {
+        data: { user: null, session: null },
+        error: new Error("Sign-up is handled by Clerk"),
+      };
+    },
 
-		async updateUser({ password, data }: { password?: string; data?: Record<string, unknown> }) {
-			try {
-				const user = firebaseAuth.currentUser;
-				if (!user) throw new Error("No active user");
+    async signOut() {
+      try {
+        await signOutClerkSession();
+        sessionStorage.removeItem("firebase_pending_signup_v1");
+        sessionStorage.removeItem("firebase_pending_forgot_password_v1");
+        sessionStorage.removeItem("dalam_pending_imagine_prompt");
+        sessionStorage.removeItem("dalam_pending_voice_prompt");
+        sessionStorage.removeItem("dalam_pending_chat_message");
+        return { error: null };
+      } catch (error: any) {
+        return { error };
+      }
+    },
 
-				if (password) {
-					await updatePassword(user, password);
-				}
+    async resetPasswordForEmail() {
+      return {
+        error: new Error("Password reset is handled by Clerk"),
+      };
+    },
 
-				const fullName = String(data?.full_name || "").trim();
-				if (fullName) {
-					await updateProfile(user, { displayName: fullName });
-				}
+    async updateUser() {
+      return {
+        error: new Error("User profile updates are handled by Clerk"),
+      };
+    },
 
-				const token = await getIdToken(user);
-				writeSessionCache(toSession(user, token));
+    async exchangeCodeForSession() {
+      return {
+        data: { session: null },
+        error: new Error("Clerk handles session exchange automatically"),
+      };
+    },
+  },
 
-				return { error: null };
-			} catch (error: any) {
-				return { error };
-			}
-		},
+  functions: {
+    async invoke(functionName: string, options?: { body?: unknown }) {
+      try {
+        const session = await refreshClerkSession();
+        const baseUrl = resolveEdgeFunctionsBaseUrl();
 
-		async exchangeCodeForSession() {
-			return { data: { session: null }, error: new Error("exchangeCodeForSession is not supported in Firebase mode") };
-		},
-	},
+        const response = await fetch(`${baseUrl}/${functionName}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          },
+          body: JSON.stringify(options?.body ?? {}),
+        });
 
-	functions: {
-		async invoke(functionName: string, options?: { body?: unknown }) {
-			try {
-				const user = firebaseAuth.currentUser;
-				const token = user ? await getIdToken(user) : null;
-				const baseUrl = resolveEdgeFunctionsBaseUrl();
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          return {
+            data: null,
+            error: new Error(String((payload as any)?.error || (payload as any)?.message || `Function ${functionName} failed`)),
+          };
+        }
 
-				const response = await fetch(`${baseUrl}/${functionName}`, {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-						...(token ? { Authorization: `Bearer ${token}` } : {}),
-					},
-					body: JSON.stringify(options?.body ?? {}),
-				});
-
-				const payload = await response.json().catch(() => ({}));
-				if (!response.ok) {
-					return { data: null, error: new Error(String((payload as any)?.error || (payload as any)?.message || `Function ${functionName} failed`)) };
-				}
-
-				return { data: payload, error: null };
-			} catch (error: any) {
-				return { data: null, error };
-			}
-		},
-	},
+        return { data: payload, error: null };
+      } catch (error: any) {
+        return { data: null, error };
+      }
+    },
+  },
 };
 
 const PENDING_REQUEST_KEYS = {
-	IMAGINE: "dalam_pending_imagine_prompt",
-	VOICE: "dalam_pending_voice_prompt",
-	CHAT: "dalam_pending_chat_message",
+  IMAGINE: "dalam_pending_imagine_prompt",
+  VOICE: "dalam_pending_voice_prompt",
+  CHAT: "dalam_pending_chat_message",
 } as const;
 
 const PENDING_REQUEST_TTL_MS = 30 * 60 * 1000;
 
 export function storePendingRequest(type: "imagine" | "voice" | "chat", data: string): void {
-	try {
-		const payload = JSON.stringify({ data, timestamp: Date.now() });
-		sessionStorage.setItem(PENDING_REQUEST_KEYS[type], payload);
-	} catch (e) {
-		console.warn("Failed to store pending request:", e);
-	}
+  try {
+    const payload = JSON.stringify({ data, timestamp: Date.now() });
+    sessionStorage.setItem(PENDING_REQUEST_KEYS[type], payload);
+  } catch (e) {
+    console.warn("Failed to store pending request:", e);
+  }
 }
 
 export function getPendingRequest<T = string>(type: "imagine" | "voice" | "chat"): T | null {
-	try {
-		const raw = sessionStorage.getItem(PENDING_REQUEST_KEYS[type]);
-		if (!raw) return null;
-		
-		const parsed = JSON.parse(raw) as { data: T; timestamp: number };
-		if (Date.now() - parsed.timestamp > PENDING_REQUEST_TTL_MS) {
-			sessionStorage.removeItem(PENDING_REQUEST_KEYS[type]);
-			return null;
-		}
-		return parsed.data;
-	} catch (e) {
-		console.warn("Failed to get pending request:", e);
-		return null;
-	}
+  try {
+    const raw = sessionStorage.getItem(PENDING_REQUEST_KEYS[type]);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as { data?: T; timestamp?: number };
+    if (!parsed?.timestamp || Date.now() - parsed.timestamp > PENDING_REQUEST_TTL_MS) {
+      sessionStorage.removeItem(PENDING_REQUEST_KEYS[type]);
+      return null;
+    }
+
+    return parsed.data ?? null;
+  } catch (e) {
+    console.warn("Failed to read pending request:", e);
+    return null;
+  }
 }
 
 export function clearPendingRequest(type: "imagine" | "voice" | "chat"): void {
-	try {
-		sessionStorage.removeItem(PENDING_REQUEST_KEYS[type]);
-	} catch (e) {
-		console.warn("Failed to clear pending request:", e);
-	}
+  try {
+    sessionStorage.removeItem(PENDING_REQUEST_KEYS[type]);
+  } catch (e) {
+    console.warn("Failed to clear pending request:", e);
+  }
 }
 
-export function hasPendingRequest(type: "imagine" | "voice" | "chat"): boolean {
-	return getPendingRequest(type) !== null;
-}

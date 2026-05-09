@@ -7,7 +7,6 @@ const envKeys = [
   "NODE_ENV",
   "PROD",
   "SSR",
-  "VITE_DALAM_TEXT_API",
   "VITE_EDGE_FUNCTIONS_BASE_URL",
   "VITE_FIREBASE_APP_ID",
   "VITE_FIREBASE_API_KEY",
@@ -15,24 +14,14 @@ const envKeys = [
   "VITE_FIREBASE_MESSAGING_SENDER_ID",
   "VITE_FIREBASE_PROJECT_ID",
   "VITE_FIREBASE_STORAGE_BUCKET",
-  "VITE_FREEPIK_API_KEY",
   "VITE_GEMINI_API_KEYS",
   "VITE_GITHUB_TOKEN",
   "VITE_GROQ_API_KEYS",
   "VITE_HTTPS_PROXY",
   "VITE_NVIDIA_API_KEYS",
-  "VITE_OTP_EMAIL_ENDPOINT",
-  "VITE_OTP_PASSWORD_RESET_ENDPOINT",
   "VITE_OPENROUTER_API_KEYS",
-  "VITE_PAYPAL_CLIENT_ID",
-  "VITE_PICO_TEXT_API",
-  "VITE_PROVIDER_ATTEMPT_TIMEOUT_MS",
-  "VITE_PROVIDER_ROTATION_PASSES",
-  "VITE_RESEND_FROM_EMAIL",
   "VITE_SITE_URL",
   "VITE_SUBSCRIPTION_ENABLED",
-  "VITE_SUPABASE_PUBLISHABLE_KEY",
-  "VITE_SUPABASE_URL",
   "VITE_UNSPLASH_ACCESS_KEY",
 ] as const;
 
@@ -53,16 +42,6 @@ const optionalBoolean = z.preprocess((value) => {
   return undefined;
 }, z.boolean().optional());
 
-const optionalPositiveInt = z.preprocess((value) => {
-  if (typeof value === "number" && Number.isInteger(value) && value > 0) return value;
-  if (typeof value !== "string") return undefined;
-  const normalized = value.trim();
-  if (!normalized) return undefined;
-  const parsed = Number(normalized);
-  if (Number.isInteger(parsed) && parsed > 0) return parsed;
-  return undefined;
-}, z.number().int().positive().optional());
-
 const envSchema = z.object({
   BASE_URL: optionalString,
   DEV: optionalBoolean,
@@ -70,7 +49,6 @@ const envSchema = z.object({
   NODE_ENV: optionalString,
   PROD: optionalBoolean,
   SSR: optionalBoolean,
-  VITE_DALAM_TEXT_API: optionalString,
   VITE_EDGE_FUNCTIONS_BASE_URL: optionalString,
   VITE_FIREBASE_APP_ID: optionalString,
   VITE_FIREBASE_API_KEY: optionalString,
@@ -78,24 +56,14 @@ const envSchema = z.object({
   VITE_FIREBASE_MESSAGING_SENDER_ID: optionalString,
   VITE_FIREBASE_PROJECT_ID: optionalString,
   VITE_FIREBASE_STORAGE_BUCKET: optionalString,
-  VITE_FREEPIK_API_KEY: optionalString,
   VITE_GEMINI_API_KEYS: optionalString,
   VITE_GITHUB_TOKEN: optionalString,
   VITE_GROQ_API_KEYS: optionalString,
   VITE_HTTPS_PROXY: optionalString,
   VITE_NVIDIA_API_KEYS: optionalString,
-  VITE_OTP_EMAIL_ENDPOINT: optionalString,
-  VITE_OTP_PASSWORD_RESET_ENDPOINT: optionalString,
   VITE_OPENROUTER_API_KEYS: optionalString,
-  VITE_PAYPAL_CLIENT_ID: optionalString,
-  VITE_PICO_TEXT_API: optionalString,
-  VITE_PROVIDER_ATTEMPT_TIMEOUT_MS: optionalPositiveInt,
-  VITE_PROVIDER_ROTATION_PASSES: optionalPositiveInt,
-  VITE_RESEND_FROM_EMAIL: optionalString,
   VITE_SITE_URL: optionalString,
   VITE_SUBSCRIPTION_ENABLED: optionalString,
-  VITE_SUPABASE_PUBLISHABLE_KEY: optionalString,
-  VITE_SUPABASE_URL: optionalString,
   VITE_UNSPLASH_ACCESS_KEY: optionalString,
 }).strict();
 

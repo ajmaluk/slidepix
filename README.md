@@ -110,9 +110,6 @@ Cloudflare environment variables to configure (Production and Preview as needed)
 - `VITE_FIREBASE_MESSAGING_SENDER_ID`
 - `VITE_FIREBASE_APP_ID`
 - `VITE_EDGE_FUNCTIONS_BASE_URL`
-- `VITE_OTP_EMAIL_ENDPOINT` or (`VITE_RESEND_API_URL` + `VITE_RESEND_API_KEY`)
-- `VITE_RESEND_FROM_EMAIL`
-- `VITE_OTP_PASSWORD_RESET_ENDPOINT`
 - Provider keys used by `src/lib/dalamRouter.ts` (optional, depending on features)
 
 Firebase API routing:

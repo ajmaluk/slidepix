@@ -206,7 +206,7 @@ export default function PricingPage() {
 
         {clerkEnabled ? (
           <div className="rounded-[2rem] border border-border/30 bg-card/20 p-4 md:p-6 shadow-[0_30px_120px_-60px_rgba(15,23,42,0.55)]">
-            <PricingTable />
+            <PricingTable for="user" />
           </div>
         ) : (
           <div className="rounded-[2rem] border border-dashed border-border/40 bg-card/10 px-6 py-14 text-center">

@@ -1,5 +1,4 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getAnalytics, isSupported } from "firebase/analytics";
 
@@ -31,7 +30,6 @@ if (isDev()) {
   console.log("Firebase initialized for project:", firebaseConfig.projectId);
 }
 
-export const firebaseAuth = getAuth(app);
 export const firebaseDb = getFirestore(app);
 
 // Analytics initialization (safe for SSR/restricted environments)
