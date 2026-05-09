@@ -799,7 +799,7 @@ async function invokeEdgeFunction(functionName: string, body?: unknown) {
   try {
     const baseUrl = normalizeEdgeBaseUrl();
     if (!baseUrl) {
-      throw new Error("Missing VITE_EDGE_FUNCTIONS_BASE_URL configuration");
+      throw new Error("Missing backend function base URL configuration");
     }
 
     const {

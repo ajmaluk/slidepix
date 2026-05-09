@@ -24,7 +24,6 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { getEnv } from "./env";
 
 export type SubscriptionTier = "free" | "basic" | "pro" | "enterprise";
 
@@ -307,9 +306,9 @@ function canManageApiForSubscription(sub: UserSubscription | null): boolean {
 }
 
 // ═══════════════════════════════════════════════════════
-// MASTER SWITCH — Controlled by .env VITE_SUBSCRIPTION_ENABLED
+// MASTER SWITCH — Paid features are active via Clerk billing
 // ═══════════════════════════════════════════════════════
-export const isPaidActivated = getEnv("VITE_SUBSCRIPTION_ENABLED") === "true";
+export const isPaidActivated = true;
 
 // ─── Tier Feature Definitions ───
 export interface TierFeatures {

@@ -76,8 +76,8 @@ export default function Navbar() {
           {clerkEnabled ? (
             <>
               <Show when="signed-out">
-                <SignInButton />
-                <SignUpButton />
+                <SignInButton mode="modal">Login</SignInButton>
+                <SignUpButton mode="modal">Register</SignUpButton>
               </Show>
               <Show when="signed-in">
                 <UserButton afterSignOutUrl="/" />

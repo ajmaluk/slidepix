@@ -24,12 +24,8 @@ function loadEnvFile(envPath) {
 function getConfig() {
   loadEnvFile(path.resolve(process.cwd(), ".env"));
 
-  const edgeBase = process.env.VITE_EDGE_FUNCTIONS_BASE_URL || "";
+  const edgeBase = "/v1/api";
   const bearerToken = process.env.E2E_BEARER_TOKEN || process.env.VITE_E2E_BEARER_TOKEN || "";
-
-  if (!edgeBase) {
-    throw new Error("Missing edge base URL. Set VITE_EDGE_FUNCTIONS_BASE_URL.");
-  }
 
   const normalizedBase = edgeBase.endsWith("/functions/v1")
     ? edgeBase

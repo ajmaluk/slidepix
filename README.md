@@ -109,7 +109,7 @@ Cloudflare environment variables to configure (Production and Preview as needed)
 - `VITE_FIREBASE_STORAGE_BUCKET`
 - `VITE_FIREBASE_MESSAGING_SENDER_ID`
 - `VITE_FIREBASE_APP_ID`
-- `VITE_EDGE_FUNCTIONS_BASE_URL`
+- `VITE_CLERK_PUBLISHABLE_KEY`
 - Provider keys used by `src/lib/dalamRouter.ts` (optional, depending on features)
 
 Firebase API routing:

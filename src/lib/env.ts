@@ -7,7 +7,6 @@ const envKeys = [
   "NODE_ENV",
   "PROD",
   "SSR",
-  "VITE_EDGE_FUNCTIONS_BASE_URL",
   "VITE_FIREBASE_APP_ID",
   "VITE_FIREBASE_API_KEY",
   "VITE_FIREBASE_AUTH_DOMAIN",
@@ -21,7 +20,6 @@ const envKeys = [
   "VITE_NVIDIA_API_KEYS",
   "VITE_OPENROUTER_API_KEYS",
   "VITE_SITE_URL",
-  "VITE_SUBSCRIPTION_ENABLED",
   "VITE_UNSPLASH_ACCESS_KEY",
 ] as const;
 
@@ -49,7 +47,6 @@ const envSchema = z.object({
   NODE_ENV: optionalString,
   PROD: optionalBoolean,
   SSR: optionalBoolean,
-  VITE_EDGE_FUNCTIONS_BASE_URL: optionalString,
   VITE_FIREBASE_APP_ID: optionalString,
   VITE_FIREBASE_API_KEY: optionalString,
   VITE_FIREBASE_AUTH_DOMAIN: optionalString,
@@ -63,7 +60,6 @@ const envSchema = z.object({
   VITE_NVIDIA_API_KEYS: optionalString,
   VITE_OPENROUTER_API_KEYS: optionalString,
   VITE_SITE_URL: optionalString,
-  VITE_SUBSCRIPTION_ENABLED: optionalString,
   VITE_UNSPLASH_ACCESS_KEY: optionalString,
 }).strict();
 

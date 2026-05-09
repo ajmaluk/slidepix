@@ -6,18 +6,14 @@ import path from "path";
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const freepikApiKey = env.VITE_FREEPIK_API_KEY?.trim();
-  const edgeFunctionsBaseUrl = env.VITE_EDGE_FUNCTIONS_BASE_URL?.trim();
   const proxy: Record<string, any> = {};
 
   if (mode === "development") {
     proxy["/v1/api"] = {
-      target: edgeFunctionsBaseUrl?.startsWith("http") ? edgeFunctionsBaseUrl : "http://127.0.0.1:5001",
+      target: "http://127.0.0.1:5001",
       changeOrigin: true,
       secure: false,
-      rewrite: (requestPath: string) =>
-        edgeFunctionsBaseUrl?.startsWith("http")
-          ? requestPath
-          : requestPath.replace(/^\/v1\/api/, "/dalamai/us-central1/api"),
+      rewrite: (requestPath: string) => requestPath.replace(/^\/v1\/api/, "/dalamai/us-central1/api"),
     };
     
     proxy["/api/nvidia"] = {

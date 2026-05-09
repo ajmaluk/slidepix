@@ -1,7 +1,7 @@
 import { useMemo } from "react";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, BadgeCheck, Sparkles } from "lucide-react";
+import { ArrowRight, BadgeCheck, Loader2, Sparkles } from "lucide-react";
 import { SignIn, SignUp } from "@clerk/react";
 import { SEOHead } from "@/components/SEOHead";
 
@@ -17,12 +17,27 @@ function AuthFeature({ title, description }: { title: string; description: strin
   );
 }
 
+function AuthFormFallback({ title }: { title: string }) {
+  return (
+    <div className="flex min-h-[31rem] flex-col items-center justify-center gap-4 rounded-[1.5rem] border border-white/10 bg-black/20 px-4 py-8 text-center">
+      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      <div>
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <p className="mt-1 text-xs leading-6 text-muted-foreground">Loading Clerk authentication...</p>
+      </div>
+    </div>
+  );
+}
+
 export default function Auth() {
   const location = useLocation();
   const clerkEnabled = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY?.trim());
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const mode = searchParams.get("mode");
   const redirectTarget = searchParams.get("redirect") || "/slides";
+  const isSignUp = mode === "sign-up";
+  const signInHref = `/auth?mode=sign-in&redirect=${encodeURIComponent(redirectTarget)}`;
+  const signUpHref = `/auth?mode=sign-up&redirect=${encodeURIComponent(redirectTarget)}`;
 
   return (
     <div className="min-h-screen bg-background">
@@ -99,22 +114,46 @@ export default function Auth() {
               </div>
 
               {clerkEnabled ? (
-                <div className="grid gap-4 lg:grid-cols-2">
-                  <div className="rounded-[1.5rem] border border-white/10 bg-black/20 p-3">
-                    <SignIn
-                      routing="virtual"
-                      signUpUrl="/auth?mode=sign-up"
-                      forceRedirectUrl={redirectTarget}
-                      fallbackRedirectUrl={redirectTarget}
-                    />
+                <div className="space-y-4">
+                  <div className="inline-flex rounded-full border border-white/10 bg-black/20 p-1">
+                    <Link
+                      to={signInHref}
+                      className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] transition-colors ${
+                        !isSignUp ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Sign in
+                    </Link>
+                    <Link
+                      to={signUpHref}
+                      className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] transition-colors ${
+                        isSignUp ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Create account
+                    </Link>
                   </div>
+
                   <div className="rounded-[1.5rem] border border-white/10 bg-black/20 p-3">
-                    <SignUp
-                      routing="virtual"
-                      signInUrl="/auth?mode=sign-in"
-                      forceRedirectUrl={redirectTarget}
-                      fallbackRedirectUrl={redirectTarget}
-                    />
+                    {isSignUp ? (
+                      <SignUp
+                        routing="path"
+                        path="/auth"
+                        signInUrl={signInHref}
+                        forceRedirectUrl={redirectTarget}
+                        fallbackRedirectUrl={redirectTarget}
+                        fallback={<AuthFormFallback title="Create your SlidePix account" />}
+                      />
+                    ) : (
+                      <SignIn
+                        routing="path"
+                        path="/auth"
+                        signUpUrl={signUpHref}
+                        forceRedirectUrl={redirectTarget}
+                        fallbackRedirectUrl={redirectTarget}
+                        fallback={<AuthFormFallback title="Sign in to SlidePix" />}
+                      />
+                    )}
                   </div>
                 </div>
               ) : (
@@ -136,4 +175,3 @@ export default function Auth() {
     </div>
   );
 }
-
