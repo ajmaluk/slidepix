@@ -133,3 +133,4 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: custom domain setup documentation for your hosting provider.
+# slidepix
