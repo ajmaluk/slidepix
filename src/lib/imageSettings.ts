@@ -1,6 +1,6 @@
-export type ImageProvider = "dalam" | "freepik" | "openai" | "stability" | "replicate";
+export type ImageProvider = "dalam" | "openai" | "stability" | "replicate";
 
-export type FreepikAspectRatio =
+export type ImageAspectRatio =
   | "square_1_1"
   | "portrait_2_3"
   | "portrait_3_4"
@@ -8,17 +8,17 @@ export type FreepikAspectRatio =
   | "landscape_4_3"
   | "widescreen_16_9";
 
-export type FreepikResolution = "1k" | "2k";
-export type FreepikEngine = "automatic" | "quality" | "speed";
+export type ImageResolution = "1k" | "2k";
+export type ImageEngine = "automatic" | "quality" | "speed";
 
 export type ImagineGenerationSettings = {
-  aspectRatio: FreepikAspectRatio;
-  resolution: FreepikResolution;
+  aspectRatio: ImageAspectRatio;
+  resolution: ImageResolution;
   structureStrength: number;
   adherence: number;
   hdr: number;
   creativeDetailing: number;
-  engine: FreepikEngine;
+  engine: ImageEngine;
   fixedGeneration: boolean;
   filterNsfw: boolean;
   autoEnhancePrompt: boolean;
@@ -57,17 +57,6 @@ export const IMAGE_PROVIDERS: ImageProviderConfig[] = [
     requiresApiKey: false,
   },
   {
-    id: "freepik",
-    name: "Freepik Mystic",
-    description: "Fine-grained control for cinematic, realistic, and stylized outputs",
-    models: [
-      { id: "realism", name: "Realism" },
-      { id: "anime", name: "Anime" },
-      { id: "general", name: "General" },
-    ],
-    requiresApiKey: true,
-  },
-  {
     id: "openai",
     name: "OpenAI DALL·E",
     description: "High-quality image generation by OpenAI",
@@ -102,61 +91,7 @@ export const IMAGE_PROVIDERS: ImageProviderConfig[] = [
 const STORAGE_KEY = "dalam-image-provider-settings";
 
 function isImageProvider(value: unknown): value is ImageProvider {
-  return value === "dalam" || value === "freepik" || value === "openai" || value === "stability" || value === "replicate";
-}
-
-function clampPercent(value: unknown, fallback: number): number {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed)) return fallback;
-  return Math.min(100, Math.max(0, Math.round(parsed)));
-}
-
-function isFreepikAspectRatio(value: unknown): value is FreepikAspectRatio {
-  return (
-    value === "square_1_1" ||
-    value === "portrait_2_3" ||
-    value === "portrait_3_4" ||
-    value === "landscape_3_2" ||
-    value === "landscape_4_3" ||
-    value === "widescreen_16_9"
-  );
-}
-
-function isFreepikResolution(value: unknown): value is FreepikResolution {
-  return value === "1k" || value === "2k";
-}
-
-function isFreepikEngine(value: unknown): value is FreepikEngine {
-  return value === "automatic" || value === "quality" || value === "speed";
-}
-
-function normalizeGenerationSettings(raw: unknown): ImagineGenerationSettings {
-  const parsed = typeof raw === "object" && raw !== null ? (raw as Record<string, unknown>) : {};
-  return {
-    aspectRatio: isFreepikAspectRatio(parsed.aspectRatio)
-      ? parsed.aspectRatio
-      : DEFAULT_IMAGINE_GENERATION_SETTINGS.aspectRatio,
-    resolution: isFreepikResolution(parsed.resolution)
-      ? parsed.resolution
-      : DEFAULT_IMAGINE_GENERATION_SETTINGS.resolution,
-    structureStrength: clampPercent(parsed.structureStrength, DEFAULT_IMAGINE_GENERATION_SETTINGS.structureStrength),
-    adherence: clampPercent(parsed.adherence, DEFAULT_IMAGINE_GENERATION_SETTINGS.adherence),
-    hdr: clampPercent(parsed.hdr, DEFAULT_IMAGINE_GENERATION_SETTINGS.hdr),
-    creativeDetailing: clampPercent(parsed.creativeDetailing, DEFAULT_IMAGINE_GENERATION_SETTINGS.creativeDetailing),
-    engine: isFreepikEngine(parsed.engine) ? parsed.engine : DEFAULT_IMAGINE_GENERATION_SETTINGS.engine,
-    fixedGeneration:
-      typeof parsed.fixedGeneration === "boolean"
-        ? parsed.fixedGeneration
-        : DEFAULT_IMAGINE_GENERATION_SETTINGS.fixedGeneration,
-    filterNsfw:
-      typeof parsed.filterNsfw === "boolean"
-        ? parsed.filterNsfw
-        : DEFAULT_IMAGINE_GENERATION_SETTINGS.filterNsfw,
-    autoEnhancePrompt:
-      typeof parsed.autoEnhancePrompt === "boolean"
-        ? parsed.autoEnhancePrompt
-        : DEFAULT_IMAGINE_GENERATION_SETTINGS.autoEnhancePrompt,
-  };
+  return value === "dalam" || value === "openai" || value === "stability" || value === "replicate";
 }
 
 export type ImageProviderSettings = {
@@ -201,7 +136,7 @@ export function loadImageSettings(): ImageProviderSettings {
         activeProvider: provider.id,
         activeModel,
         apiKeys,
-        generation: normalizeGenerationSettings(parsed.generation),
+        generation: DEFAULT_IMAGINE_GENERATION_SETTINGS,
       };
     }
   } catch (err) {

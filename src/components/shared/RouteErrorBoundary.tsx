@@ -67,10 +67,10 @@ export default class RouteErrorBoundary extends React.Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      const isDev = import.meta.env.DEV;
+      const isDev = process.env.NODE_ENV !== "production";
 
-      return (
-        <div className="min-h-[60vh] w-full flex items-center justify-center px-4">
+    return (
+      <div className="min-h-[60vh] w-full flex items-center justify-center px-4">
           <div className="max-w-lg w-full rounded-2xl border border-border bg-card p-8 text-center space-y-5">
             <div className="mx-auto w-14 h-14 rounded-full bg-destructive/10 flex items-center justify-center">
               <AlertTriangle className="w-7 h-7 text-destructive" />

@@ -5,11 +5,13 @@
 
 import { useEffect, useRef } from "react";
 import { initializeFirestoreCollections, ensureCoreCollectionsReady } from "@/lib/firestoreInit";
+import { firebaseConfigured } from "@/lib/firebaseClient";
 
 export default function FirestoreInit() {
   const initRef = useRef(false);
 
   useEffect(() => {
+    if (!firebaseConfigured) return;
     if (initRef.current) return;
     initRef.current = true;
 

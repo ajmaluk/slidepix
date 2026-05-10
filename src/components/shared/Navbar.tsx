@@ -1,21 +1,18 @@
-import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Presentation } from "lucide-react";
-import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/react";
+import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { useAuthSession } from "@/hooks/useAuthSession";
+import Link, { useNavigate } from "@/lib/navigation";
 
 const navLinks = [
   { label: "Slides", href: "/slides" },
   { label: "Pricing", href: "/pricing" },
-  { label: "About", href: "/about" },
-  { label: "Privacy", href: "/privacy" },
-  { label: "Terms", href: "/terms" },
 ];
 
 export default function Navbar() {
   const navigate = useNavigate();
   const { session } = useAuthSession();
-  const clerkEnabled = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY?.trim());
+  const clerkEnabled = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim());
 
   const handleGetStarted = () => {
     if (session?.user?.id) {
@@ -75,13 +72,13 @@ export default function Navbar() {
         <div className="hidden items-center gap-2 lg:flex">
           {clerkEnabled ? (
             <>
-              <Show when="signed-out">
+              <SignedOut>
                 <SignInButton mode="modal">Login</SignInButton>
                 <SignUpButton mode="modal">Register</SignUpButton>
-              </Show>
-              <Show when="signed-in">
-                <UserButton afterSignOutUrl="/" />
-              </Show>
+              </SignedOut>
+              <SignedIn>
+                <UserButton />
+              </SignedIn>
             </>
           ) : (
             <>

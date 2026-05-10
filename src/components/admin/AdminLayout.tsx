@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
+import { Outlet, useNavigate, useLocation, Link } from "@/lib/navigation";
 import { Shield, Users, LayoutDashboard, CreditCard, MessageSquare, ChevronLeft, LogOut, Star } from "lucide-react";
 import { authClient } from "@/lib/authClient";
 import { dbClient } from "@/integrations/firebase/client";

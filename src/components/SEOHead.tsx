@@ -40,11 +40,10 @@ export function SEOHead({
 }: SEOHeadProps) {
   const fullTitle = title.includes("SlidePix") ? title : `${title} — SlidePix`;
   const siteName = "SlidePix";
-  const siteUrl = typeof import.meta.env.VITE_SITE_URL === "string"
-    ? import.meta.env.VITE_SITE_URL.trim()
-    : typeof window !== "undefined"
-      ? window.location.origin
-      : "http://localhost:8080";
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
+    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+    (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
   const normalizedSiteUrl = siteUrl.replace(/\/+$/, "");
   const url = `${normalizedSiteUrl}${path.startsWith("/") ? path : `/${path}`}`;
   const imageUrl = image.startsWith("http") ? image : `${normalizedSiteUrl}${image}`;

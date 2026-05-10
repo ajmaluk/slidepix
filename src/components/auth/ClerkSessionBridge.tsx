@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useAuth, useUser } from "@clerk/react";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { setClerkSessionContext } from "@/lib/clerkSessionStore";
 
 function buildFullName(user: ReturnType<typeof useUser>["user"]) {
@@ -104,4 +104,3 @@ export function ClerkSessionBridge() {
 
   return null;
 }
-

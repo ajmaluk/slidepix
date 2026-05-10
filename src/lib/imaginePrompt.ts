@@ -1,6 +1,6 @@
-import type { FreepikAspectRatio, FreepikEngine, FreepikResolution, ImagineGenerationSettings } from "@/lib/imageSettings";
+import type { ImageAspectRatio, ImageEngine, ImageResolution, ImagineGenerationSettings } from "@/lib/imageSettings";
 
-export const ASPECT_RATIO_LABELS: Record<FreepikAspectRatio, string> = {
+export const ASPECT_RATIO_LABELS: Record<ImageAspectRatio, string> = {
   square_1_1: "Square 1:1",
   portrait_2_3: "Portrait 2:3",
   portrait_3_4: "Portrait 3:4",
@@ -9,12 +9,12 @@ export const ASPECT_RATIO_LABELS: Record<FreepikAspectRatio, string> = {
   widescreen_16_9: "Widescreen 16:9",
 };
 
-export const RESOLUTION_LABELS: Record<FreepikResolution, string> = {
+export const RESOLUTION_LABELS: Record<ImageResolution, string> = {
   "1k": "1K",
   "2k": "2K",
 };
 
-export const ENGINE_LABELS: Record<FreepikEngine, string> = {
+export const ENGINE_LABELS: Record<ImageEngine, string> = {
   automatic: "Automatic",
   quality: "Quality",
   speed: "Speed",

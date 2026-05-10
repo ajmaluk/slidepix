@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { jsPDF } from 'jspdf';
-import pptxgen from 'pptxgenjs';
 import html2canvas from 'html2canvas';
 
 export type SlideLayout = 'title' | 'standard' | 'split' | 'image' | 'feature';
@@ -142,7 +141,7 @@ export interface Presentation {
   createdAt: string;
 }
 
-const UNSPLASH_ACCESS_KEY = import.meta.env.VITE_UNSPLASH_ACCESS_KEY;
+const UNSPLASH_ACCESS_KEY = process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY;
 
 export interface StockImageResponse {
   url: string;
@@ -226,95 +225,27 @@ export async function exportPresentationToPdf(presentation: Presentation, slideE
 }
 
 export async function exportPresentationToPptx(presentation: Presentation) {
-  const pptx = new pptxgen();
-  pptx.layout = 'LAYOUT_16x9';
-
-  presentation.slides.forEach((slide) => {
-    const pptSlide = pptx.addSlide();
-    
-    // Helper to format text with bullets and line breaks
-    const getBulletText = (color: string) => slide.content.map(point => ({
-      text: point,
-      options: { bullet: true, fontSize: 18, color, breakLine: true }
-    }));
-
-    if (slide.layout === 'title') {
-      if (slide.imageUrl) {
-        pptSlide.background = { path: slide.imageUrl };
-        pptSlide.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: '100%', h: '100%', fill: { color: '000000', transparency: 50 } });
-      }
-      pptSlide.addText(slide.title, {
-        x: 0.5, y: '30%', w: '90%', h: 1.5,
-        fontSize: 44, bold: true, align: 'center',
-        color: slide.imageUrl ? 'FFFFFF' : '000000'
-      });
-      if (slide.content.length > 0) {
-        pptSlide.addText(slide.content[0], {
-          x: 1, y: '55%', w: '80%', h: 1,
-          fontSize: 24, align: 'center',
-          color: slide.imageUrl ? 'E0E0E0' : '666666'
-        });
-      }
-    } else if (slide.layout === 'split') {
-      pptSlide.addText(slide.title, {
-        x: 0.5, y: 0.5, w: '45%', h: 1,
-        fontSize: 32, bold: true, color: '000000'
-      });
-      pptSlide.addText(getBulletText('333333'), {
-        x: 0.5, y: 1.8, w: '40%', h: 3.5,
-        fontSize: 18, color: '333333', valign: 'top'
-      });
-      if (slide.imageUrl) {
-        pptSlide.addImage({ path: slide.imageUrl, x: '50%', y: 0.5, w: '45%', h: 4.5 });
-      }
-    } else if (slide.layout === 'image') {
-      if (slide.imageUrl) {
-        pptSlide.background = { path: slide.imageUrl };
-        pptSlide.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: '100%', h: '100%', fill: { color: '000000', transparency: 60 } });
-      }
-      pptSlide.addText(slide.title, {
-        x: 0.5, y: 0.5, w: '90%', h: 1.5,
-        fontSize: 40, bold: true, align: 'center', color: 'FFFFFF'
-      });
-      pptSlide.addText(getBulletText('FFFFFF'), {
-        x: 1, y: 2.5, w: '80%', h: 3,
-        fontSize: 22, color: 'FFFFFF', align: 'center', valign: 'top'
-      });
-    } else if (slide.layout === 'feature') {
-      pptSlide.addText(slide.title, {
-        x: 0.5, y: 0.5, w: '90%', h: 1,
-        fontSize: 36, bold: true, align: 'center', color: '000000'
-      });
-      const colWidth = 9 / Math.max(1, slide.content.length);
-      slide.content.forEach((point, i) => {
-        pptSlide.addShape(pptx.ShapeType.rect, {
-          x: 0.5 + i * colWidth, y: 2, w: colWidth - 0.5, h: 2.5,
-          fill: { color: 'F0F0F0' }
-        });
-        pptSlide.addText(point, {
-          x: 0.5 + i * colWidth, y: 2, w: colWidth - 0.5, h: 2.5,
-          fontSize: 20, bold: true, align: 'center', color: '333333', valign: 'middle'
-        });
-      });
-    } else {
-      // standard layout
-      if (slide.imageUrl) {
-        pptSlide.addImage({ path: slide.imageUrl, x: 0, y: 0, w: '100%', h: '100%', transparency: 85 });
-      }
-      pptSlide.addText(slide.title, {
-        x: 0.5, y: 0.5, w: '90%', h: 1,
-        fontSize: 32, bold: true, color: '000000'
-      });
-      pptSlide.addText(getBulletText('333333'), {
-        x: 0.5, y: 1.8, w: '90%', h: 3.5,
-        fontSize: 18, color: '333333', valign: 'top'
-      });
-    }
-
-    if (slide.notes) pptSlide.addNotes(slide.notes);
+  const response = await fetch("/api/export/pptx", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(presentation),
   });
 
-  pptx.writeFile({ fileName: `${presentation.title.replace(/\s+/g, '_')}.pptx` });
+  if (!response.ok) {
+    throw new Error(`PPTX export failed with status ${response.status}`);
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${presentation.title.replace(/\s+/g, "_")}.pptx`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 export const SLIDE_ANALYSIS_PROMPT = `

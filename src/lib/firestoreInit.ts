@@ -6,7 +6,7 @@
  * proper structure and handles edge cases.
  */
 
-import { firebaseDb } from "@/lib/firebaseClient";
+import { firebaseConfigured, firebaseDb } from "@/lib/firebaseClient";
 import { authClient } from "@/lib/authClient";
 import { collection, doc, getDoc, getDocs, limit, query, setDoc } from "firebase/firestore";
 
@@ -177,6 +177,11 @@ export async function verifyCollectionsSetup(): Promise<{
  */
 export async function initializeFirestoreCollections(): Promise<void> {
   try {
+    if (!firebaseConfigured || !firebaseDb) {
+      console.info("Firestore initialization skipped because Firebase is not configured.");
+      return;
+    }
+
     console.info("🔥 Initializing Firestore collections...");
 
     const verification = await verifyCollectionsSetup();
@@ -209,6 +214,10 @@ export async function initializeFirestoreCollections(): Promise<void> {
 
 export async function ensureCoreCollectionsReady(): Promise<boolean> {
   try {
+    if (!firebaseConfigured || !firebaseDb) {
+      return false;
+    }
+
     // Validate at least one authenticated write path so startup status is meaningful.
     const {
       data: { session },

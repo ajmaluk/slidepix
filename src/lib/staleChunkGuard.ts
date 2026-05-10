@@ -65,7 +65,7 @@ function promptForRefresh() {
 }
 
 export function installStaleChunkGuard() {
-  if (!import.meta.env.PROD) return;
+  if (process.env.NODE_ENV !== "production" || typeof window === "undefined") return;
 
   window.addEventListener("error", (event) => {
     const details = [event.message, event.error, event.filename].filter(Boolean).join("\n");

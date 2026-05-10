@@ -162,10 +162,10 @@ export function getApiKeyRotator(): ApiKeyRotator {
 
     // Auto-register multi-key providers from environment
     const multiKeyProviders: Record<string, string> = {
-      gemini: "VITE_GEMINI_API_KEYS",
-      groq: "VITE_GROQ_API_KEYS",
-      nvidia: "VITE_NVIDIA_API_KEYS",
-      openrouter: "VITE_OPENROUTER_API_KEYS",
+      gemini: "GEMINI_API_KEYS",
+      groq: "GROQ_API_KEYS",
+      nvidia: "NVIDIA_API_KEYS",
+      openrouter: "OPENROUTER_API_KEYS",
     };
 
     for (const [provider, envKey] of Object.entries(multiKeyProviders)) {

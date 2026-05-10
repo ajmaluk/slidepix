@@ -25,7 +25,7 @@ function getConfig() {
   loadEnvFile(path.resolve(process.cwd(), ".env"));
 
   const edgeBase = "/v1/api";
-  const bearerToken = process.env.E2E_BEARER_TOKEN || process.env.VITE_E2E_BEARER_TOKEN || "";
+  const bearerToken = process.env.E2E_BEARER_TOKEN || "";
 
   const normalizedBase = edgeBase.endsWith("/functions/v1")
     ? edgeBase

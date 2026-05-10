@@ -1,133 +1,86 @@
-# Welcome to SlidePix
+# SlidePix
 
-## Project info
+Next.js App Router application for generating and managing presentation workflows.
 
+## Setup
 
-
-
-
-
-
-**URL**: https://slidepix.example
-**Project Name**: SlidePix
-
-## Developer documentation
-
-- Developer onboarding and architecture guide: `docs/DEVELOPER_GUIDE.md`
-- Clerk + Firebase setup guide: [`docs/clerk-firebase-setup.md`](./docs/clerk-firebase-setup.md)
-
-## Clerk setup
-
-If you are enabling Clerk auth or billing, add your publishable key to `.env.local`:
+Install dependencies:
 
 ```bash
-VITE_CLERK_PUBLISHABLE_KEY=pk_test_your_key_here
+npm install
 ```
 
-For the current React quickstart, see [Clerk React Quickstart](https://clerk.com/docs/react/getting-started/quickstart).
+Create `.env.local` with the required Clerk and Firebase keys:
 
-## How can I edit this code?
+```bash
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_your_key_here
+CLERK_SECRET_KEY=sk_test_your_key_here
 
-There are several ways of editing your application.
+NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.firebasestorage.app
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789012
+NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789012:web:abc123def456
 
-**Use SlidePix Studio**
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_UNSPLASH_ACCESS_KEY=your_unsplash_access_key
+```
 
+Optional server-side AI provider keys:
 
+```bash
+GEMINI_API_KEYS=your_gemini_api_key_1,your_gemini_api_key_2
+GITHUB_TOKEN=your_github_token
+GROQ_API_KEYS=your_groq_api_key
+NVIDIA_API_KEYS=your_nvidia_api_key
+OPENROUTER_API_KEYS=your_openrouter_api_key
+```
 
+## Run
 
-Simply open your SlidePix workspace and start creating presentations.
+Start the dev server:
 
-Changes made in SlidePix Studio can be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in SlidePix Studio.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Build for production:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+npm run build
+```
 
-**Use GitHub Codespaces**
+Preview the production build locally:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```bash
+npm run preview
+```
 
-## What technologies are used for this project?
+## Clerk
 
-This project is built with:
+The app uses Clerk in the App Router shell and legacy screen bridge. After adding your keys:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+1. Start the dev server.
+2. Sign up as the first test user through the app nav.
+3. Verify the `<UserButton>` appears after sign-in.
 
-## How can I deploy this project?
+If you want the Clerk-specific Codex skills for future work:
 
-Open your deployment dashboard and publish the project.
+```bash
+npx skills add clerk/skills
+```
 
-### Cloudflare Pages (recommended for this repo)
+Restart your agent after installing the skills so they load.
 
-This app is a Vite single-page application (SPA), and is ready for Cloudflare Pages.
+## References
 
-Use these settings when creating the project:
+- Organizations: https://clerk.com/docs/guides/organizations/overview
+- Components: https://clerk.com/docs/reference/components/overview
+- Dashboard: https://dashboard.clerk.com/
 
-- Framework preset: `Vite`
-- Production branch: `main`
-- Build command: `npm run build`
-- Build output directory: `dist`
-- Root directory: leave empty (repository root)
+## Notes
 
-Cloudflare environment variables to configure (Production and Preview as needed):
-
-- `VITE_FIREBASE_API_KEY`
-- `VITE_FIREBASE_AUTH_DOMAIN`
-- `VITE_FIREBASE_PROJECT_ID`
-- `VITE_FIREBASE_STORAGE_BUCKET`
-- `VITE_FIREBASE_MESSAGING_SENDER_ID`
-- `VITE_FIREBASE_APP_ID`
-- `VITE_CLERK_PUBLISHABLE_KEY`
-- Provider keys used by `src/lib/dalamRouter.ts` (optional, depending on features)
-
-Firebase API routing:
-
-- The public API route is now configured as `/v1/api/**` in `firebase.json`.
-- Legacy API docs and function examples have been retired from the public product surface.
-- Use the app's slides workflow and Firebase-backed presentation storage as the source of truth for current development.
-
-Notes:
-
-- SPA route refreshes are handled by Firebase Hosting rewrites in `firebase.json`.
-- If build image Node version ever causes issues, set `NODE_VERSION=20` in Cloudflare Pages environment variables.
-
-## Can I connect a custom domain to my SlidePix project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: custom domain setup documentation for your hosting provider.
-# slidepix
+- This repository is now centered on Next.js App Router, not the Vite SPA flow.
+- Generated artifacts such as `.next/`, `dist/`, logs, and smoke-test reports are ignored.

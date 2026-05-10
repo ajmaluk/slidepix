@@ -1,10 +1,8 @@
 import * as pdfjs from 'pdfjs-dist';
-// @ts-ignore - Vite will handle the ?url import correctly
-import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
 import { tesseractPool } from './tesseractPool';
 
-// Initialize PDF.js worker using a local asset for reliability and version matching
-pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
+// Use the hosted worker to avoid bundling the worker asset into the Next client build.
+pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
 
 export interface PDFExtractionResult {
   text: string;

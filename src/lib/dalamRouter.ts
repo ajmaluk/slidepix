@@ -2,8 +2,8 @@
  * Dalam AI Routing & Multi-Provider System
  * 
  * This module acts as the central hub for all AI interactions, including:
- * 1. Chat Streaming (via Groq, OpenRouter, Gemini, NVIDIA, GitHub, Pico)
- * 2. Web Search (via Wikipedia, DuckDuckGo, Gemini/Pico)
+ * 1. Chat Streaming (via Groq, OpenRouter, Gemini, NVIDIA, GitHub)
+ * 2. Web Search (via Wikipedia, DuckDuckGo, Gemini)
  * 3. Image Generation
  * 4. OCR Structuring
  * 
@@ -32,22 +32,14 @@ import {
  */
 const splitKeys = (envStr?: string) => (envStr || "").split(',').map(s => s.trim()).filter(Boolean);
 
-const GITHUB_TOKEN = getEnv("VITE_GITHUB_TOKEN");
+const GITHUB_TOKEN = getEnv("GITHUB_TOKEN");
 // eslint-disable-next-line unused-imports/no-unused-vars
-const GROQ_KEYS = splitKeys(getEnv("VITE_GROQ_API_KEYS"));
-const OPENROUTER_KEYS = splitKeys(getEnv("VITE_OPENROUTER_API_KEYS"));
+const GROQ_KEYS = splitKeys(getEnv("GROQ_API_KEYS"));
+const OPENROUTER_KEYS = splitKeys(getEnv("OPENROUTER_API_KEYS"));
 // eslint-disable-next-line unused-imports/no-unused-vars
-const GEMINI_KEYS = splitKeys(getEnv("VITE_GEMINI_API_KEYS"));
+const GEMINI_KEYS = splitKeys(getEnv("GEMINI_API_KEYS"));
 // eslint-disable-next-line unused-imports/no-unused-vars
-const NVIDIA_KEYS = splitKeys(getEnv("VITE_NVIDIA_API_KEYS"));
-const DALAM_TEXT_API = getEnv("VITE_DALAM_TEXT_API") || getEnv("VITE_PICO_TEXT_API");
-const FREEPIK_API_KEY = getEnv("VITE_FREEPIK_API_KEY");
-const FREEPIK_API_BASE = "https://api.freepik.com/v1/ai/mystic";
-const FREEPIK_PROXY_BASE = "/api/freepik-mystic";
-const FREEPIK_REMOVE_BG_API = "https://api.freepik.com/v1/ai/remove-background";
-const FREEPIK_REMOVE_BG_PROXY = "/api/freepik-remove-bg";
-
-
+const NVIDIA_KEYS = splitKeys(getEnv("NVIDIA_API_KEYS"));
 // ─── Key Rotation State ───
 // Leverages ApiKeyRotator for failure-aware round-robin rotation with cooldown.
 const rotator = getApiKeyRotator();
@@ -82,7 +74,7 @@ function getNextKey(array: string[], indexKey: keyof typeof currentKeys): string
 export type ChatRole = "user" | "assistant" | "system";
 export type ChatMessage = { role: ChatRole; content: string };
 export type StreamCallback = (chunk: string) => void;
-export type FallbackProvider = "pico" | "groq" | "openrouter" | "gemini" | "nvidia" | "github" | "openai" | "anthropic" | "mistral";
+export type FallbackProvider = "groq" | "openrouter" | "gemini" | "nvidia" | "github" | "openai" | "anthropic" | "mistral";
 
 /**
  * Configuration options for chat routing.
@@ -164,8 +156,8 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-const envRotationPasses = parsePositiveInt(getEnv("VITE_PROVIDER_ROTATION_PASSES"));
-const envProviderAttemptTimeout = parsePositiveInt(getEnv("VITE_PROVIDER_ATTEMPT_TIMEOUT_MS"));
+const envRotationPasses = parsePositiveInt(getEnv("PROVIDER_ROTATION_PASSES"));
+const envProviderAttemptTimeout = parsePositiveInt(getEnv("PROVIDER_ATTEMPT_TIMEOUT_MS"));
 
 /**
  * Sanitizes AI response content by removing common prefixes like "Response:"
@@ -605,34 +597,11 @@ export async function runWebSearch(options: SearchOptions): Promise<{
 // ─── Provider Implementations ───
 
 /**
- * Uses the Dalam text service to analyze raw OCR text and return it in a structured JSON format.
+ * Legacy OCR structuring hook kept for compatibility.
  */
-export async function runPicoOCRStructure(options: OCROptions): Promise<{ structuredData: string; metadata: string }> {
-  if (!DALAM_TEXT_API) throw new Error("Dalam text API not configured");
-
-  const prompt = `Analyze and structure the following OCR text. Return only valid JSON with fields "structuredData" (a string representation of key data points) and "metadata" (contextual information about the document type and content).
-  
-  OCR TEXT:
-  ${options.text}`;
-
-  const response = await axios.post(DALAM_TEXT_API, {
-    prompt: prompt,
-  }, { signal: options.signal });
-
-  if (response.data && response.data.status === "success" && response.data.text) {
-    try {
-      const text = response.data.text;
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
-      }
-      return { structuredData: text, metadata: "Extracted via Dalam" };
-    } catch {
-      return { structuredData: response.data.text, metadata: "Raw extraction" };
-    }
-  } else {
-    throw new Error("Dalam OCR structuring failed");
-  }
+export async function runOCRStructure(options: OCROptions): Promise<{ structuredData: string; metadata: string }> {
+  void options;
+  throw new Error("OCR structuring via the removed text provider is unavailable.");
 }
 
 /**
@@ -655,52 +624,11 @@ function buildLengthDirective(messages: ChatMessage[]): string {
 }
 
 /**
- * Internal handler for the Dalam text generation.
+ * Legacy text generation hook kept for compatibility.
  */
-async function runPico(options: RouterOptions): Promise<void> {
-  if (!DALAM_TEXT_API) throw new Error("Dalam text API not configured");
-  
-  const sysMsg = options.messages.find(m => m.role === 'system')?.content || "";
-  const lengthDirective = buildLengthDirective(options.messages);
-  
-  // Build a rich conversation context for Dalam — include more history for better awareness
-  const nonSystemMessages = options.messages.filter(m => m.role !== 'system');
-  const conversationHistory = nonSystemMessages
-    .slice(-16) // Keep last 16 messages for richer context
-    .map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
-    .join('\n\n');
-  
-  // Extract the latest user query for focused response
-  const lastUserMsg = nonSystemMessages.filter(m => m.role === 'user').pop()?.content || '';
-  
-  const prompt = [
-    sysMsg ? `System Instructions:\n${sysMsg}` : '',
-    lengthDirective,
-    `\nConversation History:\n${conversationHistory}`,
-    `\nIMPORTANT: The user's latest question is: "${lastUserMsg}"`,
-    `\nProvide a complete, well-formatted response using markdown. Do NOT truncate or cut short.`,
-    `If the user asks for something detailed, provide a thorough and comprehensive answer.`,
-    `If the user asks a simple question, give a clear and direct answer.`,
-    `Always use appropriate markdown: ## headers, **bold**, bullet points, and \`code\` where helpful.`
-  ].filter(Boolean).join('\n');
-  
-  if (isDev()) {
-    console.log(`[Dalam Router] Requesting Dalam text API:`, {
-      promptLength: prompt.length,
-      historyLength: nonSystemMessages.length
-    });
-  }
-  
-  const response = await axios.post(DALAM_TEXT_API, {
-    prompt: prompt,
-  }, { signal: options.signal });
-
-  if (response.data && response.data.status === "success" && response.data.text) {
-    const sanitized = sanitizeResponseContent(response.data.text);
-    options.onChunk(sanitized);
-  } else {
-    throw new Error("Dalam text API failed to return text");
-  }
+async function runLegacyTextProvider(options: RouterOptions): Promise<void> {
+  void options;
+  throw new Error("The removed legacy text provider is unavailable.");
 }
 
 /**
@@ -1046,170 +974,6 @@ async function runGithub(options: RouterOptions): Promise<void> {
 export async function routeImageGen(options: ImageGenOptions): Promise<string> {
   const provider = (options.provider || "").trim().toLowerCase();
 
-  if (provider === "freepik") {
-    const freepikKey = options.apiKey || FREEPIK_API_KEY;
-    if (!freepikKey) {
-      throw new Error("Freepik API key is required.");
-    }
-
-    const clampPercent = (value: number | undefined, fallback: number) => {
-      const normalized = Number(value);
-      if (!Number.isFinite(normalized)) return fallback;
-      return Math.min(100, Math.max(0, Math.round(normalized)));
-    };
-
-    const normalizeWeight = (value: number | undefined, fallback: number) => {
-      const normalized = Number(value);
-      if (!Number.isFinite(normalized)) return fallback / 100;
-      return Math.min(1.0, Math.max(0.0, normalized / 100));
-    };
-
-    const normalizeFreepikModel = (model: string | undefined) => {
-      const value = (model || "").trim().toLowerCase();
-      // Official Mystic variants: realism, fluid, flexible
-      if (value === "realism" || value === "fluid" || value === "flexible") return value;
-      // Map UI friendly names to official model variants
-      if (value === "anime") return "flexible";
-      if (value === "general") return "realism";
-      return "realism";
-    };
-
-    // Construct the Mystic API request body
-    // Reference: docs.freepik.com API Reference
-    const body: any = {
-      prompt: options.prompt,
-      resolution: options.resolution || "2k",
-      aspect_ratio: options.aspectRatio || "square_1_1",
-      model: normalizeFreepikModel(options.model),
-      creative_detailing: clampPercent(options.creativeDetailing, 40),
-    };
-
-    // Removed adherence and hdr as they are not top-level parameters in the official Mystic documentation
-    // and were causing 400 Validation errors.
-    
-    // structure_strength REQUIRES a structure_reference image to be present
-    // Since we don't currently support reference images in this UI, we omit it to avoid validation errors
-    if (options.structureStrength !== undefined && (body.structure_reference)) {
-      body.structure_strength = normalizeWeight(options.structureStrength, 30);
-    }
-
-    const tryReadUrl = (payload: any): string | null => {
-      const generated = payload?.data?.generated;
-      const generatedFirst = Array.isArray(generated) ? generated[0] : generated;
-      const candidates = [
-        generatedFirst,
-        generatedFirst?.url,
-        generatedFirst?.image_url,
-        generatedFirst?.signed_url,
-        generatedFirst?.download_url,
-        payload?.data?.[0]?.url,
-        payload?.data?.url,
-        payload?.data?.image_url,
-        payload?.image?.url,
-        payload?.image_url,
-        payload?.output?.[0],
-        payload?.output,
-        payload?.url,
-      ];
-      for (const candidate of candidates) {
-        if (typeof candidate === "string" && /^https?:\/\//.test(candidate)) {
-          return candidate;
-        }
-      }
-      return null;
-    };
-
-    const inBrowser = typeof window !== "undefined";
-    const requestBase = inBrowser ? FREEPIK_PROXY_BASE : FREEPIK_API_BASE;
-    const headers = inBrowser
-      ? { "Content-Type": "application/json" }
-      : {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          "x-freepik-api-key": freepikKey,
-        };
-
-    let resp: Response;
-    try {
-      resp = await fetch(requestBase, {
-        method: "POST",
-        headers: {
-          ...headers,
-          ...(inBrowser && options.apiKey ? { "x-freepik-api-key": options.apiKey } : {}),
-        },
-        body: JSON.stringify(body),
-        signal: options.signal,
-      });
-    } catch (err: any) {
-      const message = String(err?.message || "").toLowerCase();
-      if (message.includes("failed to fetch") || message.includes("networkerror") || message.includes("load failed") || message.includes("cors")) {
-        throw new Error("Freepik request was blocked by the browser. When the app is running locally, the Vite proxy route must be enabled so browser calls can reach Freepik.");
-      }
-      throw err;
-    }
-
-    const data = await resp.json().catch(() => null);
-    if (!resp.ok) {
-      if (import.meta.env.DEV) {
-        console.error("[Freepik Generation Failed]", {
-          status: resp.status,
-          statusText: resp.statusText,
-          data,
-          sentBody: body,
-        });
-      }
-      const msg = data?.message || data?.error?.message || `Freepik request failed (${resp.status})`;
-      throw new Error(msg);
-    }
-
-    const activeBase = requestBase;
-
-    const directUrl = tryReadUrl(data);
-    if (directUrl) return directUrl;
-
-    const taskId =
-      (typeof data?.data?.task_id === "string" && data.data.task_id) ||
-      (typeof data?.task_id === "string" && data.task_id) ||
-      "";
-
-    const pollingUrl =
-      (taskId ? `${activeBase}/${taskId}` : "") ||
-      (typeof data?.links?.self === "string" && data.links.self) ||
-      (typeof data?.links?.get === "string" && data.links.get) ||
-      (typeof data?.status_url === "string" && data.status_url) ||
-      (typeof data?.url === "string" ? data.url : "");
-
-    if (pollingUrl) {
-      // Increased polling limit to 100 iterations (approx 2 minutes) for high-load periods
-      for (let i = 0; i < 100; i += 1) {
-        await new Promise((resolve) => setTimeout(resolve, 1500)); // slightly longer delay
-
-
-        const statusResp = await fetch(pollingUrl, { headers, signal: options.signal });
-        const statusData = await statusResp.json().catch(() => null);
-
-        if (!statusResp.ok) {
-          const msg = statusData?.message || statusData?.error?.message || `Freepik polling failed (${statusResp.status})`;
-          throw new Error(msg);
-        }
-
-        const statusUrl = tryReadUrl(statusData);
-        if (statusUrl) return statusUrl;
-
-        const state = String(statusData?.data?.status || statusData?.status || "").toLowerCase();
-        if (state.includes("completed") || state.includes("finished") || state.includes("succeeded")) {
-          const msg = statusData?.message || statusData?.data?.message;
-          throw new Error(msg || "Freepik completed generation but no image URL was returned.");
-        }
-        if (state.includes("failed") || state.includes("error") || state.includes("rejected")) {
-          throw new Error(statusData?.message || statusData?.data?.message || "Freepik image generation failed.");
-        }
-      }
-    }
-
-    throw new Error("Freepik image was not ready in time. Please try again.");
-  }
-
   const key = options.apiKey || getNextKey(OPENROUTER_KEYS, 'openRouterIndex');
   if (key) {
     try {
@@ -1239,43 +1003,10 @@ export async function routeImageGen(options: ImageGenOptions): Promise<string> {
 }
 
 /**
- * Removes the background from an image using Freepik's dedicated API.
+ * Legacy background-removal hook kept for compatibility.
  */
-export async function runFreepikRemoveBg(imageUrlOrBase64: string, apiKey?: string, signal?: AbortSignal): Promise<string> {
-  const inBrowser = typeof window !== "undefined";
-  const requestBase = inBrowser ? FREEPIK_REMOVE_BG_PROXY : FREEPIK_REMOVE_BG_API;
-  const freepikKey = apiKey || FREEPIK_API_KEY;
-
-  if (!freepikKey && !inBrowser) {
-    throw new Error("Freepik API key is required for background removal.");
-  }
-
-  const isBase64 = imageUrlOrBase64.startsWith("data:") || imageUrlOrBase64.length > 1000;
-  const body = isBase64 
-    ? { image_base64: imageUrlOrBase64 }
-    : { image_url: imageUrlOrBase64 };
-
-  const response = await fetch(requestBase, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(inBrowser ? {} : { "x-freepik-api-key": freepikKey as string }),
-      ...(inBrowser && apiKey ? { "x-freepik-api-key": apiKey } : {}),
-    },
-    body: JSON.stringify(body),
-    signal,
-  });
-
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(data.message || data.error || `Background removal failed (${response.status})`);
-  }
-
-  // Freepik Background Removal API returns { data: { url: "..." } } synchronous
-  if (data?.data?.url) return data.data.url;
-  if (data?.url) return data.url;
-
-  throw new Error("Freepik removed background but no image URL was returned.");
+export async function runRemoveBackground(_imageUrlOrBase64: string, _apiKey?: string, _signal?: AbortSignal): Promise<string> {
+  throw new Error("Background removal via the removed image provider is unavailable.");
 }
 
 
@@ -1400,11 +1131,11 @@ async function runEdgeFunction(options: RouterOptions): Promise<void> {
 /**
  * Priority queues for providers based on user tiers.
  */
-const FREE_QUEUE: (FallbackProvider | "edge")[] = ["nvidia", "gemini", "github", "edge", "pico"];
-const BASIC_QUEUE: (FallbackProvider | "edge")[] = ["nvidia", "gemini", "github", "edge", "groq", "openrouter", "pico"];
-const PRO_QUEUE: (FallbackProvider | "edge")[] = ["nvidia", "gemini", "github", "edge", "groq", "openrouter", "pico"];
+const FREE_QUEUE: (FallbackProvider | "edge")[] = ["nvidia", "gemini", "github", "edge"];
+const BASIC_QUEUE: (FallbackProvider | "edge")[] = ["nvidia", "gemini", "github", "edge", "groq", "openrouter"];
+const PRO_QUEUE: (FallbackProvider | "edge")[] = ["nvidia", "gemini", "github", "edge", "groq", "openrouter"];
 
-const PROVIDER_SET = new Set<QueueProvider>(["pico", "groq", "openrouter", "gemini", "nvidia", "github", "edge"]);
+const PROVIDER_SET = new Set<QueueProvider>(["groq", "openrouter", "gemini", "nvidia", "github", "edge"]);
 
 function toQueueProvider(input?: string): QueueProvider | null {
   if (!input) return null;
@@ -1439,7 +1170,6 @@ function resolveProviderAttemptTimeoutMs(timeoutMs?: number): number {
 }
 
 async function runProvider(provider: QueueProvider, options: RouterOptions): Promise<void> {
-  if (provider === "pico") return runPico(options);
   if (provider === "groq") return runGroq(options);
   if (provider === "openrouter") return runOpenRouter(options);
   if (provider === "gemini") return runGemini(options);
@@ -1584,16 +1314,6 @@ export async function routeDalamChat(options: RouterOptions): Promise<void> {
           rotator.reportFailure(rotatorProvider, usedKey);
         }
         
-        // Try fallback if primary fails
-        if (provider !== "pico" && !queue.includes("pico")) {
-           try {
-             console.log(`[Dalam Router] Provider failed, trying Pico as backup...`);
-             await runPico(options);
-             return;
-           } catch (picoErr) {
-             console.warn(`[Dalam Router] Backup also failed:`, picoErr);
-           }
-        }
       }
     }
   }

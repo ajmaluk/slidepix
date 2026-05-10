@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, Presentation, Plus, Search, Settings, Trash2, X } from "lucide-react";
 import { toast } from "sonner";

@@ -152,6 +152,10 @@ function mergeProviders(parsedProviders?: Partial<Record<AIProvider, Partial<Pro
 }
 
 export function loadSettings(): AppSettings {
+  if (typeof window === "undefined" || typeof localStorage === "undefined") {
+    return { ...defaultSettings };
+  }
+
   try {
     const stored = localStorage.getItem(SETTINGS_KEY) || localStorage.getItem("dalam-settings");
     if (stored) {
@@ -176,5 +180,9 @@ export function loadSettings(): AppSettings {
 }
 
 export function saveSettings(settings: AppSettings) {
+  if (typeof window === "undefined" || typeof localStorage === "undefined") {
+    return;
+  }
+
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 }

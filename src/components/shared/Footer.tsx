@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/navigation";
 
 export default function Footer() {
   return (
@@ -14,9 +14,6 @@ export default function Footer() {
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-xs font-medium tracking-[0.16em] uppercase text-muted-foreground">
             <Link to="/slides" className="transition-colors hover:text-foreground">Slides</Link>
             <Link to="/pricing" className="transition-colors hover:text-foreground">Pricing</Link>
-            <Link to="/about" className="transition-colors hover:text-foreground">About</Link>
-            <Link to="/privacy" className="transition-colors hover:text-foreground">Privacy</Link>
-            <Link to="/terms" className="transition-colors hover:text-foreground">Terms</Link>
           </div>
         </div>
         <div className="flex flex-col items-center justify-between gap-3 text-center text-xs text-muted-foreground/60 md:flex-row md:text-left">
